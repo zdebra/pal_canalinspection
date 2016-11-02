@@ -28,6 +28,11 @@ int min(int a, int b) {
     return b;
 }
 
+int max(int a, int b) {
+    if(a >= b) return a;
+    return b;
+}
+
 int tarjan(Node& node, int label) {
 
     globalIndex++;
@@ -37,7 +42,7 @@ int tarjan(Node& node, int label) {
 
     // for each node descendant
     Edge* d = node.descendant;
-    int max = 0;
+    int sub = 0;
     while(d != NULL) {
 
         // node wasn't touched yet
@@ -54,26 +59,31 @@ int tarjan(Node& node, int label) {
 
         // scc closed
         else {
-
+            sub = lakes[d->end_lake_label].cost;
         }
+
+        // increases cost if an edge is affected
+        sub += d->affected;
+
+        // it is a new maximum if it's higher number than previous costs
+        node.cost = max(node.cost,sub);
 
         d = d->next;
     }
 
     if(node.lowlink == node.index) {
 
-        std::cout << "Found SCC: ";
+        // pop from stack until root is reached (and those poped nodes are members of SCC)
         int cur;
         do {
             cur = stack->pop();
-            std::cout << cur << ", ";
+            lakes[cur].cost = node.cost;
 
         } while(cur != label && cur != -1);
 
-        std::cout << std::endl;
     }
 
-    return max;
+    return node.cost;
 
 
 };
@@ -127,21 +137,26 @@ int main() {
 
     std::cout << max << std::endl;
 
-    /*
-    for(int i=0; i < N; i++) {
-        std::cout << i << ":";
+/*
+    int a = 2;
+    int &b = a;
 
-        Edge *c = lakes[i].descendant;
-        do {
-            std::cout << " -> " << c->end_lake_label << "," << c->affected;
-            c = c->next;
-        }
-        while(c != NULL);
-        std::cout << std::endl;
-    }
-    */
+    b++;
+
+    std::cout << a << std::endl;
 
 
+    Node parent;
+    parent.cost = 5;
+
+    Node d1;
+    &d1.cost = parent.cost;
+
+    d1.cost++;
+
+    std::cout << parent.cost << std::endl;
+    std::cout << d1.cost << std::endl;
+*/
 
     delete canals;
     delete lakes;
