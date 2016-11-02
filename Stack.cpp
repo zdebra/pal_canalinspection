@@ -17,7 +17,7 @@ void Stack::push(int value) {
 
 int Stack::pop() {
     if(index == 0) {
-        throw -1;
+        return -1;
     }
     index--;
     return data[index];

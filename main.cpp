@@ -5,54 +5,97 @@
 /**
  * @param affected true if previous canal is affected
  */
-struct canal {
+struct Edge {
     int end_lake_label;
     bool affected;
-    canal *next;
+    Edge *next;
 };
 
-struct lake {
+struct Node {
     int index;
     int lowlink;
     int cost;
-    canal *descendant;
+    Edge *descendant;
 };
 
 int globalIndex = 0;
 
 Stack* stack;
+Node* lakes;
 
+int min(int a, int b) {
+    if(a<=b) return a;
+    return b;
+}
 
-int tarjan(lake& node) {
+int tarjan(Node& node, int label) {
 
     globalIndex++;
     node.index = globalIndex;
     node.lowlink = globalIndex;
-    stack->push(node.index);
+    stack->push(label);
 
-    return 2;
+    // for each node descendant
+    Edge* d = node.descendant;
+    int max = 0;
+    while(d != NULL) {
+
+        // node wasn't touched yet
+        if(lakes[d->end_lake_label].index == 0) {
+            tarjan(lakes[d->end_lake_label], d->end_lake_label);
+            node.lowlink = min(lakes[d->end_lake_label].lowlink, node.lowlink);
+        }
+
+        // scc wasn't closed yet
+        else if(stack->contains(d->end_lake_label)) {
+            node.lowlink = min(node.lowlink,lakes[d->end_lake_label].index);
+
+        }
+
+        // scc closed
+        else {
+
+        }
+
+        d = d->next;
+    }
+
+    if(node.lowlink == node.index) {
+
+        std::cout << "Found SCC: ";
+        int cur;
+        do {
+            cur = stack->pop();
+            std::cout << cur << ", ";
+
+        } while(cur != label && cur != -1);
+
+        std::cout << std::endl;
+    }
+
+    return max;
+
 
 };
 
 int main() {
 
     int N, M;
-    canal* canals;
-    lake* lakes;
+    Edge* canals;
 
     std::cin >> N;
     std::cin >> M;
 
     // allocating N lakes
-    lakes = new lake[N];
+    lakes = new Node[N];
     // allocating M canals
-    canals = new canal[M];
+    canals = new Edge[M];
     // create global stack
-    stack = new Stack(N);
+    stack = new Stack(M);
 
     int start, finish;
     bool affected;
-    for(int i=0; i<M; i++) {
+    for(int i=0; i<M; ++i) {
 
         std::cin >> start;
         std::cin >> finish;
@@ -64,7 +107,7 @@ int main() {
         if(lakes[start].descendant == NULL) {
             lakes[start].descendant = &canals[i];
         } else {
-            canal *cur = lakes[start].descendant;
+            Edge* cur = lakes[start].descendant;
             while(cur->next != NULL) {
                 cur = cur->next;
             }
@@ -77,19 +120,18 @@ int main() {
     int max = 0;
     for(int i=0; i < N; i++) {
         if(lakes[i].index == 0) {
-            int c = tarjan(lakes[i]);
+            int c = tarjan(lakes[i], i);
             max = (c > max) ? c : max;
         }
     }
 
     std::cout << max << std::endl;
-    
 
     /*
     for(int i=0; i < N; i++) {
         std::cout << i << ":";
 
-        canal *c = lakes[i].descendant;
+        Edge *c = lakes[i].descendant;
         do {
             std::cout << " -> " << c->end_lake_label << "," << c->affected;
             c = c->next;
