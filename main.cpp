@@ -15,6 +15,7 @@ struct Node {
     int index;
     int lowlink;
     int cost;
+    int back_cost;
     Edge *descendant;
 };
 
@@ -33,7 +34,7 @@ int max(int a, int b) {
     return b;
 }
 
-int tarjan(Node& node, int label) {
+void tarjan(Node& node, int label) {
 
     globalIndex++;
     node.index = globalIndex;
@@ -42,36 +43,42 @@ int tarjan(Node& node, int label) {
 
     // for each node descendant
     Edge* d = node.descendant;
-    int sub = 0;
     while(d != NULL) {
 
         // node wasn't touched yet
         if(lakes[d->end_lake_label].index == 0) {
             tarjan(lakes[d->end_lake_label], d->end_lake_label);
-            node.lowlink = min(lakes[d->end_lake_label].lowlink, node.lowlink);
+
+            // there is a back edge further this way
+            if(lakes[d->end_lake_label].lowlink < lakes[d->end_lake_label].index) {
+                node.back_cost = lakes[d->end_lake_label].back_cost + d->affected;
+                node.cost = max(node.cost,lakes[d->end_lake_label].cost);
+                node.lowlink = min(node.lowlink, lakes[d->end_lake_label].lowlink);
+            }
+            // the road is closing further this way
+            else {
+                node.cost = max(node.cost,lakes[d->end_lake_label].cost + d->affected);
+            }
+
         }
 
         // scc wasn't closed yet
         else if(stack->contains(d->end_lake_label)) {
             node.lowlink = min(node.lowlink,lakes[d->end_lake_label].index);
-
+            node.back_cost += d->affected;
         }
 
         // scc closed
         else {
-            sub = lakes[d->end_lake_label].cost;
+            node.cost = max(node.cost, lakes[d->end_lake_label].cost + d->affected);
         }
-
-        // increases cost if an edge is affected
-        sub += d->affected;
-
-        // it is a new maximum if it's higher number than previous costs
-        node.cost = max(node.cost,sub);
 
         d = d->next;
     }
 
     if(node.lowlink == node.index) {
+
+        node.cost += node.back_cost;
 
         // pop from stack until root is reached (and those poped nodes are members of SCC)
         int cur;
@@ -79,12 +86,10 @@ int tarjan(Node& node, int label) {
             cur = stack->pop();
             lakes[cur].cost = node.cost;
 
+
         } while(cur != label && cur != -1);
 
     }
-
-    return node.cost;
-
 
 };
 
@@ -130,33 +135,12 @@ int main() {
     int max = 0;
     for(int i=0; i < N; i++) {
         if(lakes[i].index == 0) {
-            int c = tarjan(lakes[i], i);
-            max = (c > max) ? c : max;
+            tarjan(lakes[i], i);
+            max = (lakes[i].cost > max) ? lakes[i].cost : max;
         }
     }
 
     std::cout << max << std::endl;
-
-/*
-    int a = 2;
-    int &b = a;
-
-    b++;
-
-    std::cout << a << std::endl;
-
-
-    Node parent;
-    parent.cost = 5;
-
-    Node d1;
-    &d1.cost = parent.cost;
-
-    d1.cost++;
-
-    std::cout << parent.cost << std::endl;
-    std::cout << d1.cost << std::endl;
-*/
 
     delete canals;
     delete lakes;
