@@ -51,7 +51,7 @@ void tarjan(Node& node, int label) {
 
             // there is a back edge further this way
             if(lakes[d->end_lake_label].lowlink < lakes[d->end_lake_label].index) {
-                node.back_cost = lakes[d->end_lake_label].back_cost + d->affected;
+                node.back_cost += lakes[d->end_lake_label].back_cost + d->affected;
                 node.cost = max(node.cost,lakes[d->end_lake_label].cost);
                 node.lowlink = min(node.lowlink, lakes[d->end_lake_label].lowlink);
             }
