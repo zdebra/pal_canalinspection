@@ -3,8 +3,17 @@
 #include "Stack.h"
 
 /**
- * @param affected true if previous canal is affected
+ * Slightly improved version of tarjan algorithm (better DFS) for finding strongly connected components (SSC) in oriented graph.
+ *
+ * Tarjan algorithm: @{link https://www.algoritmy.net/article/1515/Tarjanuv-algoritmus}
+ * Task: https://cw.felk.cvut.cz/courses/a4m33pal/task.php?task=canalsinspection
+ *
+ * It does only single traversion through the graph, thus O(V+E).
+ *
+ * It reads data from stdin as is defined in assignment.
+ *
  */
+
 struct Edge {
     int end_lake_label;
     bool affected;
@@ -41,7 +50,7 @@ void tarjan(Node& node, int label) {
     node.lowlink = globalIndex;
     stack->push(label);
 
-    // for each node descendant
+    // for each node's descendant
     Edge* d = node.descendant;
     while(d != NULL) {
 
@@ -103,11 +112,14 @@ int main() {
 
     // allocating N lakes
     lakes = new Node[N];
+
     // allocating M canals
     canals = new Edge[M];
-    // create global stack
-    stack = new Stack(M);
 
+    // create global stack
+    stack = new Stack(N);
+
+    // retrieve data from stdin and create graph representation
     int start, finish;
     bool affected;
     for(int i=0; i<M; ++i) {
@@ -129,9 +141,9 @@ int main() {
             cur->next = &canals[i];
         }
 
-
     }
 
+    // run tarjan for each node which wasn't visited yet
     int max = 0;
     for(int i=0; i < N; i++) {
         if(lakes[i].index == 0) {
